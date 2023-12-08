@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
+import 'package:video_player/video_player.dart';
 
 void main() {
   runApp(const MyApp());
@@ -7,119 +11,175 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Video Player',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a blue toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const VideoPlayerScreen(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class VideoPlayerScreen extends StatefulWidget {
+  const VideoPlayerScreen({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<VideoPlayerScreen> createState() => _VideoPlayerScreenState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
+  late VideoPlayerController _controller1;
+  late VideoPlayerController _controller2;
 
-  void _incrementCounter() {
+  VideoPlayerController _controller3 =
+      VideoPlayerController.networkUrl(Uri.parse("uri"));
+
+  String inputVideo1Path =
+      "/storage/emulated/0/Download/VideoTrimmerAndMerger/input-video-1.mp4";
+  String inputVideo2Path =
+      "/storage/emulated/0/Download/VideoTrimmerAndMerger/input-video-2.mp4";
+  @override
+  void initState() {
+    super.initState();
+    _controller1 = VideoPlayerController.file(File(inputVideo1Path))
+      ..initialize().then((_) {
+        setState(() {});
+      });
+    _controller2 = VideoPlayerController.file(File(inputVideo2Path))
+      ..initialize().then((_) {
+        setState(() {});
+      });
+  }
+
+  makeOutputVideoController(String outputVideoPath) {
+    _controller3 = VideoPlayerController.file(File(outputVideoPath))
+      ..initialize().then((_) {
+        setState(() {});
+      });
+  }
+
+  bool isOutputVideoProcessing = false;
+  startLoader(BuildContext context) {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      isOutputVideoProcessing = true;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: const Text("Video Player"),
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Column(
+                children: [
+                  const Text("Input Video 1"),
+                  SizedBox(
+                    height: 100,
+                    width: 100,
+                    child: VideoPlayer(_controller1),
+                  ),
+                ],
+              ),
+              const SizedBox(
+                width: 10,
+              ),
+              Column(
+                children: [
+                  const Text("Input Video 2"),
+                  SizedBox(
+                    height: 100,
+                    width: 100,
+                    child: VideoPlayer(_controller2),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text("Output Video"),
+              isOutputVideoProcessing
+                  ? const Padding(
+                      padding: EdgeInsets.all(10.0),
+                      child: Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
+                  : SizedBox(
+                      height: 100,
+                      width: 100,
+                      child: VideoPlayer(_controller3),
+                    ),
+            ],
+          ),
+        ],
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          startLoader(context);
+          setState(() async {
+            String outputVideoPath = await editVideos(
+              inputVideo1Path,
+              inputVideo2Path,
+            );
+            makeOutputVideoController(outputVideoPath);
+            isOutputVideoProcessing = false;
+          });
+        },
+        label: const Column(
+          children: [
+            Text("Trim and Merge"),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
+
+  @override
+  void dispose() {
+    _controller1.dispose();
+    _controller2.dispose();
+    _controller3.dispose();
+    super.dispose();
+  }
+}
+
+Future<String> editVideos(String videoPath1, String videoPath2) async {
+  final FlutterFFmpeg flutterFFmpeg = FlutterFFmpeg();
+
+  String trimmedVideo1Path =
+      "/storage/emulated/0/Download/VideoTrimmerAndMerger/trimmed-input-video-1.mp4";
+  await flutterFFmpeg.execute(
+    '-i $videoPath1 -ss 3 -t 7 -vf "scale=1920x1080,fps=24,format=yuv420p" -c:a copy $trimmedVideo1Path',
+  );
+
+  String trimmedVideo2Path =
+      "/storage/emulated/0/Download/VideoTrimmerAndMerger/trimmed-input-video-2.mp4";
+  await flutterFFmpeg.execute(
+    '-i $videoPath2 -ss 3 -t 7 -vf "scale=1920x1080,fps=24,format=yuv420p" -c:a copy $trimmedVideo2Path',
+  );
+
+  String outputVideoPath =
+      "/storage/emulated/0/Download/VideoTrimmerAndMerger/output-video.mp4";
+  await flutterFFmpeg.execute(
+    '-vsync 2 -i $trimmedVideo1Path -i $trimmedVideo2Path -filter_complex \'[0:v]setpts=PTS-STARTPTS,scale=1920x1080,fps=24,format=yuv420p[video0];[1:v]setpts=PTS-STARTPTS,scale=1920x1080,fps=24,format=yuv420p[video1];[video0][0:a:0][video1][1:a:0]concat=n=2:v=1:a=1[out]\' -map \'[out]\' $outputVideoPath',
+  );
+  return outputVideoPath;
 }
